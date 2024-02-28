@@ -105,3 +105,66 @@ def visualizeGraph(n, meetings):
 
     # Save the graph visualization as PNG
     graph.render("weighted_graph")
+
+
+# visualizeGraph(n, meetings)
+
+
+def graph(n, meetings, firstPerson):
+    g = [[] for _ in range(n)]
+    for x, y, time in meetings:
+        g[x].append((y, time))
+        g[y].append((x, time))
+
+    return g
+
+
+def edges(graph, node):
+    edges = []
+    for neighbor, weight in graph[node]:
+        edges.append(([set([node, neighbor]), weight]))
+    return edges
+
+
+def opposite_and_weight(node, edge):
+    import copy
+
+    edge_c = copy.deepcopy(edge)
+    if node in edge_c[0]:
+        edge_c[0].remove(node)
+        return edge_c[0].pop(), edge_c[1]
+    else:
+        raise
+
+
+have_secret = [False for _ in range(n)]
+have_secret[0] = True
+have_secret[firstPerson] = True
+
+
+def dfs(graph, node, weight, have_secret, visited_nodes=None):
+    if visited_nodes is None:
+        visited_nodes = set()
+    # visit all edges from node, mark nodes with secret
+    for edge in edges(graph, node):
+        opposite, new_weight = opposite_and_weight(node, edge)
+        if new_weight >= weight and have_secret[node]:
+            have_secret[opposite] = True
+    # visition of current node is done
+    # add it to visited nodes
+    visited_nodes.add(node)
+    # recursion for all neighbors
+    for neighbor, weight in graph[node]:
+        if neighbor not in visited_nodes:
+            dfs(graph, neighbor, weight, have_secret, visited_nodes)
+
+
+g = graph(n, meetings, firstPerson)
+dfs(g, firstPerson, 0, have_secret)
+persons_with_secret = []
+for i in enumerate(have_secret):
+    if i[1]:
+        persons_with_secret.append(i[0])
+
+print(persons_with_secret)
+assert persons_with_secret == expected
