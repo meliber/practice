@@ -58,9 +58,29 @@
 
 # test case
 n = 12
-meetings = [[10,8,6],[9,5,11],[0,5,18],[4,5,13],[11,6,17],[0,11,10],[10,11,7],[5,8,3],[7,6,16],[3,6,10],[3,11,1],[8,3,2],[5,0,7],[3,8,20],[11,0,20],[8,3,4],[1,9,4],[10,7,11],[8,10,18]]
+meetings = [
+    [10, 8, 6],
+    [9, 5, 11],
+    [0, 5, 18],
+    [4, 5, 13],
+    [11, 6, 17],
+    [0, 11, 10],
+    [10, 11, 7],
+    [5, 8, 3],
+    [7, 6, 16],
+    [3, 6, 10],
+    [3, 11, 1],
+    [8, 3, 2],
+    [5, 0, 7],
+    [3, 8, 20],
+    [11, 0, 20],
+    [8, 3, 4],
+    [1, 9, 4],
+    [10, 7, 11],
+    [8, 10, 18],
+]
 firstPerson = 9
-expected = [0,1,4,5,6,9,11]
+expected = [0, 1, 4, 5, 6, 9, 11]
 
 # Visualization graph data
 # According to the description, person 0 initially shares the secret with a person "firstPerson" at time 0. Add this sharing to meetings.
@@ -69,10 +89,11 @@ meetings.append([0, firstPerson, 0])
 # Use graphviz for graph visualization
 from graphviz import Graph
 
+
 def visualizeGraph(n, meetings):
     # Create an undirected graph
-    graph = Graph(format='pdf', engine='dot', strict=False)
-    graph.attr(directed='false')
+    graph = Graph(format="pdf", engine="dot", strict=False)
+    graph.attr(directed="false")
 
     # Add nodes to the graph
     for i in range(n):
@@ -83,6 +104,4 @@ def visualizeGraph(n, meetings):
         graph.edge(str(x), str(y), label=str(weight))
 
     # Save the graph visualization as PNG
-    graph.render('weighted_graph')
-
-visualizeGraph(n, meetings)
+    graph.render("weighted_graph")
