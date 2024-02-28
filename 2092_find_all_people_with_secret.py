@@ -137,11 +137,6 @@ def opposite_and_weight(node, edge):
         raise
 
 
-have_secret = [False for _ in range(n)]
-have_secret[0] = True
-have_secret[firstPerson] = True
-
-
 def dfs(graph, node, weight, have_secret, visited_nodes=None):
     if visited_nodes is None:
         visited_nodes = set()
@@ -159,12 +154,20 @@ def dfs(graph, node, weight, have_secret, visited_nodes=None):
             dfs(graph, neighbor, weight, have_secret, visited_nodes)
 
 
-g = graph(n, meetings, firstPerson)
-dfs(g, firstPerson, 0, have_secret)
-persons_with_secret = []
-for i in enumerate(have_secret):
-    if i[1]:
-        persons_with_secret.append(i[0])
+have_secret = [False for _ in range(n)]
+have_secret[0] = True
+have_secret[firstPerson] = True
 
-print(persons_with_secret)
-assert persons_with_secret == expected
+
+def persons_with_secret(n, meetings, firstPerson):
+    g = graph(n, meetings, firstPerson)
+    dfs(g, firstPerson, 0, have_secret)
+    result = []
+    for i in enumerate(have_secret):
+        if i[1]:
+            result.append(i[0])
+    return result
+
+
+result = persons_with_secret(n, meetings, firstPerson)
+assert result == expected
