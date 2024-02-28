@@ -121,8 +121,11 @@ def graph(n, meetings, firstPerson):
 
 def edges(graph, node):
     edges = []
-    for neighbor, weight in graph[node]:
-        edges.append(([set([node, neighbor]), weight]))
+    try:
+        for neighbor, weight in graph[node]:
+            edges.append(([set([node, neighbor]), weight]))
+    except KeyError:
+        pass
     return edges
 
 
@@ -137,37 +140,96 @@ def opposite_and_weight(node, edge):
         raise
 
 
-def dfs(graph, node, weight, have_secret, visited_nodes=None):
+def dfs(g, node, have_secret, visited_nodes=None):
+    """search all nodes and all edges, mark nodes with secret"""
+    all_nodes = list(range(len(g)))
     if visited_nodes is None:
         visited_nodes = set()
     # visit all edges from node, mark nodes with secret
-    for edge in edges(graph, node):
-        opposite, new_weight = opposite_and_weight(node, edge)
-        if new_weight >= weight and have_secret[node]:
-            have_secret[opposite] = True
+    try:
+        edges_of_node = edges(g, node)
+        for edge in edges_of_node:
+            opposite, meeting_time = opposite_and_weight(node, edge)
+            node_has_secret = have_secret[node][0]
+            opposite_has_secret = have_secret[opposite][0]
+            moment_node_has_secret = have_secret[node][1]
+            moment_opposite_has_secret = have_secret[opposite][1]
+            if node_has_secret:
+                if opposite_has_secret:
+                    if meeting_time < moment_opposite_has_secret:
+                        have_secret[opposite][1] = meeting_time
+                elif meeting_time >= moment_node_has_secret:
+                    have_secret[opposite] = [True, meeting_time]
+            elif opposite_has_secret:
+                if meeting_time >= moment_opposite_has_secret:
+                    have_secret[node] = [True, meeting_time]
+    except KeyError:
+        pass
     # visition of current node is done
     # add it to visited nodes
     visited_nodes.add(node)
     # recursion for all neighbors
-    for neighbor, weight in graph[node]:
+    for neighbor, _ in g[node]:
         if neighbor not in visited_nodes:
-            dfs(graph, neighbor, weight, have_secret, visited_nodes)
-
-
-have_secret = [False for _ in range(n)]
-have_secret[0] = True
-have_secret[firstPerson] = True
+            dfs(g, neighbor, have_secret, visited_nodes)
+    for node in all_nodes:
+        if node not in visited_nodes:
+            dfs(g, node, have_secret, visited_nodes)
 
 
 def persons_with_secret(n, meetings, firstPerson):
+    # index 0 is person 0
+    # [False, None] is ["has secret", "earliest meeting time in which gets secret"]
+    have_secret = [[False, float("inf")] for _ in range(n)]
+    have_secret[0] = [True, 0]
+    have_secret[firstPerson] = [True, 0]
     g = graph(n, meetings, firstPerson)
-    dfs(g, firstPerson, 0, have_secret)
+    dfs(g, firstPerson, have_secret)
     result = []
     for i in enumerate(have_secret):
-        if i[1]:
+        if i[1][0]:
             result.append(i[0])
     return result
 
 
-result = persons_with_secret(n, meetings, firstPerson)
-assert result == expected
+import pytest
+
+
+def test_persons_with_secret(n, meetings, firstPerson, expected):
+    assert persons_with_secret(n, meetings, firstPerson) == expected
+
+
+test_data = [
+    (
+        12,
+        [
+            [10, 8, 6],
+            [9, 5, 11],
+            [0, 5, 18],
+            [4, 5, 13],
+            [11, 6, 17],
+            [0, 11, 10],
+            [10, 11, 7],
+            [5, 8, 3],
+            [7, 6, 16],
+            [3, 6, 10],
+            [3, 11, 1],
+            [8, 3, 2],
+            [5, 0, 7],
+            [3, 8, 20],
+            [11, 0, 20],
+            [8, 3, 4],
+            [1, 9, 4],
+            [10, 7, 11],
+            [8, 10, 18],
+        ],
+        9,
+        [0, 1, 4, 5, 6, 9, 11],
+    ),
+    (6, [[0, 2, 1], [1, 3, 1], [4, 5, 1]], 1, [0, 1, 2, 3]),
+]
+
+
+@pytest.mark.parametrize("n, meetings, firstPerson, expected", test_data)
+def test_persons_with_secret(n, meetings, firstPerson, expected):
+    assert persons_with_secret(n, meetings, firstPerson) == expected
