@@ -117,61 +117,26 @@ def graph(n, meetings):
     return g
 
 
-def edges(graph, node):
-    edges = []
-    try:
-        for neighbor, weight in graph[node]:
-            edges.append([set([node, neighbor]), weight])
-    except KeyError:
-        # node has no neighbor
-        # graph[node] == []
-        pass
-    return edges
-
-
-def opposite_and_weight(node, edge):
-    import copy
-
-    # deep copy edge to avoid mutation
-    edge_c = copy.deepcopy(edge)
-    if node in edge_c[0]:
-        edge_c[0].remove(node)
-        return edge_c[0].pop(), edge_c[1]
-    raise
-
-
 def dfs(g, node, all_nodes, have_secret, visited_nodes):
     """search all nodes and all edges, mark nodes with secret"""
     visited_nodes.add(node)
-    # visit all edges from current node, mark nodes with secret
-    edges_of_node = edges(g, node)
-    try:
-        for edge in edges_of_node:
-            opposite, meeting_time = opposite_and_weight(node, edge)
-            node_has_secret = have_secret[node][0]
-            opposite_has_secret = have_secret[opposite][0]
-            moment_node_has_secret = have_secret[node][1]
-            moment_opposite_has_secret = have_secret[opposite][1]
-            if node_has_secret:
-                if opposite_has_secret:
-                    if meeting_time < moment_opposite_has_secret:
-                        have_secret[opposite][1] = meeting_time
-                elif meeting_time >= moment_node_has_secret:
-                    have_secret[opposite] = [True, meeting_time]
-            elif opposite_has_secret:
-                if meeting_time >= moment_opposite_has_secret:
-                    have_secret[node] = [True, meeting_time]
-        # visit of current node is done
-        # recursively visit all neighbors of current node
-        neighbors = [i[0] for i in g[node]]
-        for neighbor in neighbors:
+    neighbors = g[node]
+    node_has_secret, moment_node_gets_secret = have_secret[node]
+    if node_has_secret:
+        if neighbors:
+            for i in neighbors:
+                neighbor, meeting_time = i
+                neighbor_has_secret, moment_neighbor_gets_secret = have_secret[neighbor]
+                if meeting_time >= moment_node_gets_secret:
+                    have_secret[neighbor][0] = True
+                    if meeting_time < moment_neighbor_gets_secret:
+                        have_secret[neighbor][1] = meeting_time
+    # recursively visit all neighbors of current node
+    if neighbors:
+        for i in neighbors:
+            neighbor, _ = i
             if neighbor not in visited_nodes:
                 dfs(g, neighbor, all_nodes, have_secret, visited_nodes)
-    except KeyError:
-        # edges_of_node is []
-        # the node has no neighor
-        # leave it untouch
-        pass
 
     # visit non-neighbor nodes
     for node in all_nodes:
