@@ -122,8 +122,9 @@ def dfs(g, node, all_nodes, have_secret, visited_nodes):
     visited_nodes.add(node)
     neighbors = g[node]
     node_has_secret, moment_node_gets_secret = have_secret[node]
-    if node_has_secret:
-        if neighbors:
+    if neighbors:
+        # update neighbors if node has secret
+        if node_has_secret:
             for i in neighbors:
                 neighbor, meeting_time = i
                 neighbor_has_secret, moment_neighbor_gets_secret = have_secret[neighbor]
@@ -131,8 +132,7 @@ def dfs(g, node, all_nodes, have_secret, visited_nodes):
                     have_secret[neighbor][0] = True
                     if meeting_time < moment_neighbor_gets_secret:
                         have_secret[neighbor][1] = meeting_time
-    # recursively visit all neighbors of current node
-    if neighbors:
+        # recursively visit all neighbors of current node
         for i in neighbors:
             neighbor, _ = i
             if neighbor not in visited_nodes:
