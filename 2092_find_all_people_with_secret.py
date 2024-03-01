@@ -108,64 +108,45 @@ def visualizeGraph(n, meetings):
 # visualizeGraph(n, meetings)
 
 
-def graph(n, meetings):
-    g = [[] for _ in range(n)]
-    for x, y, time in meetings:
-        g[x].append((y, time))
-        g[y].append((x, time))
+def people_with_secret(n, meetings, firstPerson):
+    from collections import defaultdict, deque
 
-    return g
+    # Create a dictionary to store meetings at each time step
+    meeting_dict = defaultdict(list)
 
+    # Populate the meeting dictionary
+    for meeting in meetings:
+        x, y, time = meeting
+        meeting_dict[time].append((x, y))
 
-def dfs(g, node, all_nodes, have_secret, visited_nodes):
-    """search all nodes and all edges, mark nodes with secret"""
-    visited_nodes.add(node)
-    neighbors = g[node]
-    node_has_secret, moment_node_gets_secret = have_secret[node]
-    if neighbors:
-        # update neighbors if node has secret
-        if node_has_secret:
-            for i in neighbors:
-                neighbor, meeting_time = i
-                neighbor_has_secret, moment_neighbor_gets_secret = have_secret[neighbor]
-                if meeting_time >= moment_node_gets_secret:
-                    have_secret[neighbor][0] = True
-                    if meeting_time < moment_neighbor_gets_secret:
-                        have_secret[neighbor][1] = meeting_time
-        # recursively visit all neighbors of current node
-        for i in neighbors:
-            neighbor, _ = i
-            if neighbor not in visited_nodes:
-                dfs(g, neighbor, all_nodes, have_secret, visited_nodes)
+    # Initialize a set with the first person who knows the secret
+    have_secret = set([0, firstPerson])
 
-    # visit non-neighbor nodes
-    for node in all_nodes:
-        if node not in visited_nodes:
-            dfs(g, node, all_nodes, have_secret, visited_nodes)
+    meeting_sequence = sorted(meeting_dict.keys())
+    for moment in meeting_sequence:
+        queue = deque(have_secret)
+        while queue:
+            secret_source = queue.popleft()
+            # Check all meetings involving the current person
+            for x, y in meeting_dict[moment]:
+                # x passes secret to y
+                if x == secret_source and y not in have_secret:
+                    have_secret.add(y)
+                    # y may still pass secret to others at this moment
+                    queue.append(y)
+                elif y == secret_source and x not in have_secret:
+                    have_secret.add(x)
+                    queue.append(x)
 
-
-def persons_with_secret(n, meetings, firstPerson):
-    # index 0 is person 0
-    # [False, float('inf')] is ["has secret", "earliest meeting time in which person gets secret"]
-    all_nodes = list(range(n))
-    have_secret = [[False, float("inf")] for _ in range(n)]
-    have_secret[0] = [True, 0]
-    have_secret[firstPerson] = [True, 0]
-    visited_nodes = set()
-    g = graph(n, meetings)
-    dfs(g, firstPerson, all_nodes, have_secret, visited_nodes)
-    result = []
-    for i in enumerate(have_secret):
-        if i[1][0]:
-            result.append(i[0])
-    return result
+    # Return the result as a sorted list
+    return sorted(list(have_secret))
 
 
 import pytest
 
 
-def test_persons_with_secret(n, meetings, firstPerson, expected):
-    assert persons_with_secret(n, meetings, firstPerson) == expected
+def test_people_with_secret(n, meetings, firstPerson, expected):
+    assert people_with_secret(n, meetings, firstPerson) == expected
 
 
 test_data = [
@@ -753,5 +734,5 @@ test_data = [
 
 
 @pytest.mark.parametrize("n, meetings, firstPerson, expected", test_data)
-def test_persons_with_secret(n, meetings, firstPerson, expected):
-    assert persons_with_secret(n, meetings, firstPerson) == expected
+def test_people_with_secret(n, meetings, firstPerson, expected):
+    assert people_with_secret(n, meetings, firstPerson) == expected
